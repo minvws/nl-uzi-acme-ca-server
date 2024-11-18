@@ -91,33 +91,20 @@ async def verify_challenge(
 
     if must_solve_challenge:
         try:
-            # TODO get headers here
             jwt = request.headers.get('X-Acme-Jwt')
             cert = request.headers.get('X-Acme-Cert')
             f9_cert = request.headers.get('X-Acme-F9Cert')
-
-            
-
-            # token = request.Header.Get("X-Acme-Jwt")
-			# cert = request.Header.Get("X-Acme-Cert")
-			# f9cert = request.Header.Get("X-Acme-F9Cert")
             
             challenge_token = token
             payload = JWTPayload(
                 jwt,
-                'TOKEYSECRETHERE',
                 cert,
                 f9_cert,
-                'aud',
             )
-
-            # TODO implement JWT validator here
             validator = UZIJWTValidator()
+            
+            # This will raise an exception if it fails
             validator.validate(payload, challenge_token)
-
-            # await service.check_challenge_is_fulfilled(
-            #     domain=domain, token=token, jwk=data.key, new_nonce=data.new_nonce
-            # )
             err = False
         except ACMEException as e:
             err = e
