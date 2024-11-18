@@ -1,6 +1,8 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
+
+from app.jwt_validator import JWTPayload, UZIJWTValidator
 
 from ... import db
 from ...config import settings
@@ -8,13 +10,13 @@ from ...logger import logger
 
 from ..exceptions import ACMEException
 from ..middleware import RequestData, SignedRequest
-from . import service
 
 api = APIRouter(tags=['acme:challenge'])
 
 
 @api.post('/challenges/{chal_id}')
 async def verify_challenge(
+    request: Request,
     response: Response,
     chal_id: str,
     data: Annotated[RequestData, Depends(SignedRequest())],
@@ -85,15 +87,37 @@ async def verify_challenge(
         acme_error = None
 
     # use append because there can be multiple Link-Headers with different rel targets
-    response.headers.append(
-        'Link', f'<{settings.external_url}authorization/{authz_id}>;rel="up"'
-    )
+    response.headers.append('Link', f'<{settings.external_url}authorization/{authz_id}>;rel="up"')
 
     if must_solve_challenge:
         try:
-            await service.check_challenge_is_fulfilled(
-                domain=domain, token=token, jwk=data.key, new_nonce=data.new_nonce
+            # TODO get headers here
+            jwt = request.headers.get('X-Acme-Jwt')
+            cert = request.headers.get('X-Acme-Cert')
+            f9_cert = request.headers.get('X-Acme-F9Cert')
+
+            
+
+            # token = request.Header.Get("X-Acme-Jwt")
+			# cert = request.Header.Get("X-Acme-Cert")
+			# f9cert = request.Header.Get("X-Acme-F9Cert")
+            
+            challenge_token = token
+            payload = JWTPayload(
+                jwt,
+                'TOKEYSECRETHERE',
+                cert,
+                f9_cert,
+                'aud',
             )
+
+            # TODO implement JWT validator here
+            validator = UZIJWTValidator()
+            validator.validate(payload, challenge_token)
+
+            # await service.check_challenge_is_fulfilled(
+            #     domain=domain, token=token, jwk=data.key, new_nonce=data.new_nonce
+            # )
             err = False
         except ACMEException as e:
             err = e

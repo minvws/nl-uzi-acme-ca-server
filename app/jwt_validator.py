@@ -11,17 +11,14 @@ import jwt
 class JWTPayload:
     # These will be coming in via headers
     token: str
-    token_secret: str
-
     certificate: str
     f9_certificate: str
-    audience: str
 
 
 class UZIJWTValidator:
-    def _decode_jwt(self, token: str, key: str, audience: str):
-        # Do we need to decode with signature verification?
-        return jwt.decode(token, key, algorithms=['HS256'], audience=audience)
+    def _decode_jwt(self, token: str):        
+        # When this is implemented in production, verify the token key, audience and issuer.
+        return jwt.decode(token, algorithms=['HS256'], options={"verify_signature": False})
 
     def _validate_payload_schema(self, payload: dict[str, Any]) -> None:
         props = {
@@ -78,8 +75,6 @@ class UZIJWTValidator:
     def validate(self, jwt_payload: JWTPayload, token: str) -> None:
         decoded_jwt_payload: dict[str, Any] = self._decode_jwt(
             jwt_payload.token,
-            jwt_payload.token_secret,
-            jwt_payload.audience,
         )
         self._validate_payload_schema(decoded_jwt_payload)
         acme_tokens: list[str] = decoded_jwt_payload.get('acme_tokens', [])

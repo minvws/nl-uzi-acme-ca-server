@@ -11,12 +11,12 @@ from jwt.exceptions import DecodeError
 DEFAULT_JWT_SECRET = 'badsecret'
 
 def _create_sample_jwt(payload: dict[str, Any], secret: str = DEFAULT_JWT_SECRET):
-    encoded = jwt.encode(payload, secret, algorithm='HS256')
+    encoded = jwt.encode(payload, secret)
     
     return encoded
 
 def test_jwt_validate_unparsable_token():
-    payload = JWTPayload('badtoken', '123', '123', '1235', 'test-audience')
+    payload = JWTPayload('badtoken', '123', '123')
     
     with pytest.raises(DecodeError):
         UZIJWTValidator().validate(payload, '123')
@@ -26,7 +26,7 @@ def test_jwt_actual_jwt_empty_payload():
     sample_jwt = _create_sample_jwt({
         'aud': 'test-audience'
     })
-    payload = JWTPayload(sample_jwt, DEFAULT_JWT_SECRET, '123', '1235', 'test-audience')
+    payload = JWTPayload(sample_jwt, '123', '123')
     
     with pytest.raises(ValidationError):
         UZIJWTValidator().validate(payload, '123')
@@ -62,7 +62,7 @@ def test_jwt_actual_jwt_with_payload_token_not_present():
         "acme_tokens": ['test-123']
     }
     sample_jwt = _create_sample_jwt(jwt_payload)
-    payload = JWTPayload(sample_jwt, DEFAULT_JWT_SECRET, '123', '1235', 'test-audience')
+    payload = JWTPayload(sample_jwt, '123', '123')
     
     with pytest.raises(LookupError):
         UZIJWTValidator().validate(payload, '123')
@@ -97,7 +97,7 @@ def test_jwt_token_found():
         "acme_tokens": ['test-123']
     }
     sample_jwt = _create_sample_jwt(jwt_payload)
-    payload = JWTPayload(sample_jwt, DEFAULT_JWT_SECRET, '123', '1235', 'test-audience')
+    payload = JWTPayload(sample_jwt, '123', '123')
     
 
     UZIJWTValidator().validate(payload, 'test-123')
