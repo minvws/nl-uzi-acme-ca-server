@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
 
 from app.uzi_cert_generator import UZICertificateGenerator
+from app.uzi_record import UZIRecord
 
 from .. import db
 from ..acme.certificate.service import SerialNumberConverter
@@ -67,29 +68,27 @@ def load_ca_sync(*, cert_pem, key_pem_enc):
 
 
 def generate_cert_sync(*, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, csr: x509.CertificateSigningRequest, subject_domain: str, san_domains: list[str]):
-    # TODO Retrieve uzi record here. This can be fetched from the JWT
+    # TODO Retrieve uzi record here from the JWT. 
     # This is only send across when doing ACME-challenges.
     # Do we want to pass the same JWT or store it somewhere?
-    # record := &uzi.UziRecord{
-	# 	IsTest:          true,
-	# 	Surname:         claim.Surname,
-	# 	GivenName:       claim.SurnamePrefix,
-	# 	UziNr:           claim.UziID,
-	# 	Version:         uzi.VersionDefault,
-	# 	CardType:        uzi.CardTypeNamedEmployee,
-	# 	SubscriptionNr:  claim.Relations[0].Ura,
-	# 	Role:            claim.Relations[0].Roles[0],
-	# 	AGBCode:         uzi.AgbCodeDefault,
-	# 	Entity:          claim.Relations[0].EntityName,
-	# 	CertFingerprint: fingerprint,
-	# }
-    
-    
+    uzi_record = UZIRecord(
+        'test',
+        'testerson',
+        '123',
+        '123',
+        'test',
+        '123',
+        'role1',
+        '123',
+        'test',
+        '123',
+    )
+
     cert = UZICertificateGenerator(
         settings.ca.cert_lifetime,
         ca_key,
         ca_cert,
-    ).generate(csr)
+    ).generate(csr, uzi_record)
 
     cert_pem = cert.public_bytes(serialization.Encoding.PEM)
     ca_cert_pem = ca_cert.public_bytes(serialization.Encoding.PEM)

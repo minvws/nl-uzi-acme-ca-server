@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 from cryptography.hazmat.primitives import hashes
 
+from app.uzi_record import UZIRecord
+
 
 class UZICertificateGenerator:
     _lifetime: timedelta
@@ -18,26 +20,22 @@ class UZICertificateGenerator:
         self._ca_key = ca_key
         self._ca_cert = ca_cert
 
-    def _build(self, csr: x509.CertificateSigningRequest) -> x509.CertificateBuilder:
+    def _build(self, csr: x509.CertificateSigningRequest, record: UZIRecord) -> x509.CertificateBuilder:
         # Replace value with uzi policies
         certificate_policies_extension = x509.CertificatePolicies([])
 
         # TODO replace value with uzi seq bytes
         san_extension = x509.SubjectAlternativeName([])
 
+
+        common_name = f"{record.given_name} {record.surname}"
         subject_name = x509.Name(
             [
                 x509.NameAttribute(x509.NameOID.COUNTRY_NAME, 'NL'),
-                # TODO replace value with "record.GivenName + " " + record.Surname"
-                x509.NameAttribute(x509.NameOID.COMMON_NAME, ''),
-                # TODO replace the value with the Entity name in the request
-                x509.NameAttribute(x509.NameOID.ORGANIZATION_NAME, 'CIBG'),
-                # TODO replace value with surname value from record
-                x509.NameAttribute(x509.NameOID.SURNAME, 'CIBG'),
-                # TODO replace value with given name value from record
-                x509.NameAttribute(x509.NameOID.GIVEN_NAME, 'CIBG'),
-                # TODO replace value with uzi number from record
-                x509.NameAttribute(x509.NameOID.SERIAL_NUMBER, 'CIBG'),
+                x509.NameAttribute(x509.NameOID.COMMON_NAME, common_name),
+                x509.NameAttribute(x509.NameOID.SURNAME, record.surname),
+                x509.NameAttribute(x509.NameOID.GIVEN_NAME, record.given_name),
+                x509.NameAttribute(x509.NameOID.SERIAL_NUMBER, record.uzi_nr),
             ],
         )
         key_usage = x509.KeyUsage(
@@ -78,8 +76,8 @@ class UZICertificateGenerator:
         )
         return builder
 
-    def generate(self, csr: x509.CertificateSigningRequest):
-        cert_builder = self._build(csr)
+    def generate(self, csr: x509.CertificateSigningRequest, record: UZIRecord):
+        cert_builder = self._build(csr, record)
 
         signed = cert_builder.sign(
             private_key=self._ca_key,
