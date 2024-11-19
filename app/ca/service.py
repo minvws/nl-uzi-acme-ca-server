@@ -69,6 +69,44 @@ def load_ca_sync(*, cert_pem, key_pem_enc):
 def generate_cert_sync(*, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, csr: x509.CertificateSigningRequest, subject_domain: str, san_domains: list[str]):
     ca_id = SerialNumberConverter.int2hex(ca_cert.serial_number)
 
+
+
+    # implement this
+	# template := x509.Certificate{
+	# 	SerialNumber: big.NewInt(0).SetBytes(serial),
+	# 	Subject: pkix.Name{
+	# 		ExtraNames: []pkix.AttributeTypeAndValue{
+	# 			{Type: []int{2, 5, 4, 5}, Value: record.UziNr},      // Serial Number
+	# 			{Type: []int{2, 5, 4, 4}, Value: record.Surname},    // Surname
+	# 			{Type: []int{2, 5, 4, 42}, Value: record.GivenName}, // Given Name
+	# 		},
+	# 		Country:      []string{"NL"},
+	# 		Organization: []string{record.Entity},
+	# 		CommonName:   record.GivenName + " " + record.Surname,
+	# 	},
+	# 	KeyUsage: x509.KeyUsageDigitalSignature,
+	# 	ExtKeyUsage: []x509.ExtKeyUsage{
+	# 		x509.ExtKeyUsageClientAuth,
+	# 		x509.ExtKeyUsageEmailProtection,
+	# 	},
+	# 	UnknownExtKeyUsage: []asn1.ObjectIdentifier{
+	# 		{1, 3, 6, 1, 4, 1, 311, 10, 3, 12}, // szOID_KP_DOCUMENT_SIGNING - Microsoft document signing
+	# 	},
+	# 	BasicConstraintsValid: true,
+	# 	IsCA:                  false,
+	# 	ExtraExtensions: []pkix.Extension{
+	# 		{
+	# 			Id:    []int{2, 5, 29, 32},
+	# 			Value: policiesBytes,
+	# 		},
+	# 		{
+	# 			Id:    []int{2, 5, 29, 17},
+	# 			Value: uziSeqBytes,
+	# 		},
+	# 	},
+	# }
+
+    
     cert_builder = (
         x509.CertificateBuilder(
             issuer_name=ca_cert.subject,
@@ -92,7 +130,6 @@ def generate_cert_sync(*, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, cs
             ),
             critical=False,
         )
-        .add_extension(x509.SubjectAlternativeName(general_names=[x509.DNSName(domain) for domain in san_domains]), critical=False)
         .add_extension(
             x509.KeyUsage(
                 digital_signature=True,
