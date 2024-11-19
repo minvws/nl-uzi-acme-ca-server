@@ -18,7 +18,7 @@ class WebSettings(BaseSettings):
 
 class CaSettings(BaseSettings):
     enabled: bool = True
-    cert_lifetime: timedelta = timedelta(days=60)
+    cert_lifetime: timedelta = timedelta(days=30)
     crl_lifetime: timedelta = timedelta(days=7)
     encryption_key: Optional[SecretStr] = None  # encryption of private keys in database
 

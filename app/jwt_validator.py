@@ -43,14 +43,12 @@ class UZIJWTValidator:
                 },
             },
             'aud': {'type': 'string'},
-            'bsn': {'type': 'string'},
             'exp': {'type': 'integer'},
             'initials': {'type': 'string'},
             'iss': {'type': 'string'},
             'loa_authn': {'type': 'string'},
             'loa_uzi': {'type': 'string'},
             'nbf': {'type': 'integer'},
-            'revocation_token': {'type': 'string'},
             'sub': {'type': 'string'},
             'surname': {'type': 'string'},
             'surname_prefix': {'type': 'string'},
@@ -62,7 +60,7 @@ class UZIJWTValidator:
         schema = {
             'type': 'object',
             'properties': props,
-            'additionalProperties': False,
+            'additionalProperties': True,
             'required': all_property_names,
         }
         # If no exception is raised by validate(), the instance is valid.

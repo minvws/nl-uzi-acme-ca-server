@@ -34,6 +34,7 @@ async def check_csr(
             new_nonce=new_nonce,
         )
 
+    # TODO it fails on this line
     sans = csr.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value.get_values_for_type(x509.DNSName)
     csr_domains = set(sans)
     subject_candidates = csr.subject.get_attributes_for_oid(
@@ -52,13 +53,17 @@ async def check_csr(
     else:
         subject_domain = sans[0]
 
-    if csr_domains != set(ordered_domains):
-        raise ACMEException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            exctype='badCSR',
-            detail='domains in CSR does not match validated domains in ACME order',
-            new_nonce=new_nonce,
-        )
+    
+    # Previously, we ordered certificates for a certain set of domains. This has to match in the CSR.
+    # This is not relevant for us.
+    #
+    # if csr_domains != set(ordered_domains):
+    #     raise ACMEException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         exctype='badCSR',
+    #         detail='domains in CSR does not match validated domains in ACME order',
+    #         new_nonce=new_nonce,
+    #     )
 
     csr_pem: str = (await csr_pem_job).decode()
     return csr, csr_pem, subject_domain, csr_domains

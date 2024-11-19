@@ -18,9 +18,8 @@ from ..middleware import RequestData, SignedRequest
 
 
 class NewOrderDomain(BaseModel):
-    type: Literal['dns']  # noqa: A003 (allow shadowing builtin "type")
-    value: constr(pattern=f'^{settings.acme.target_domain_regex.pattern}$')
-
+    type: Literal['dns', 'jwt']  # noqa: A003 (allow shadowing builtin "type")
+    value: str
 
 class NewOrderPayload(BaseModel):
     identifiers: conlist(NewOrderDomain, min_length=1)
@@ -199,7 +198,7 @@ async def finalize_order(response: Response, order_id: str, data: Annotated[Requ
     authz_ids = [authz_id for authz_id, domain in records]
 
     csr_bytes = base64url_decode(data.payload.csr)
-
+    
     csr, csr_pem, subject_domain, san_domains = await check_csr(
         csr_bytes, ordered_domains=domains, new_nonce=data.new_nonce
     )
