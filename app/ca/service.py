@@ -3,14 +3,15 @@
 # set env var CA_ENABLED=False when providing a custom ca implementation
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime
 
 from cryptography import x509
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
-from cryptography.x509.oid import ExtendedKeyUsageOID, ObjectIdentifier
+
+from app.uzi_cert_generator import UZICertificateGenerator
 
 from .. import db
 from ..acme.certificate.service import SerialNumberConverter
@@ -66,90 +67,11 @@ def load_ca_sync(*, cert_pem, key_pem_enc):
 
 
 def generate_cert_sync(*, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, csr: x509.CertificateSigningRequest, subject_domain: str, san_domains: list[str]):
-    ca_id = SerialNumberConverter.int2hex(ca_cert.serial_number)
-    
-    certificate_policies_extension = x509.Extension(
-        oid=x509.ObjectIdentifier("2.5.29.32"),
-        critical=False,  # Or True if it's a critical extension
-        # TODO Replace with policies
-        value=b''
-    )
-    
-    
-    # Add Subject Alternative Name extension (OID 2.5.29.17)
-    san_extension = x509.Extension(
-        oid=x509.ObjectIdentifier("2.5.29.17"),
-        critical=False,  # Set to True if it's critical
-        # TODO replace with uzi seq bytes
-        value=b''
-    )
-    
-    subject_name = x509.Name(
-        [
-            x509.NameAttribute(x509.NameOID.COUNTRY_NAME, 'NL'),
-            # TODO replace value with "record.GivenName + " " + record.Surname"
-            x509.NameAttribute(x509.NameOID.COMMON_NAME, subject_domain),
-            # TODO replace the value with the Entity name in the request
-            x509.NameAttribute(x509.NameOID.ORGANIZATION_NAME, 'CIBG'),
-            
-            # TODO replace value with surname value from record
-            x509.NameAttribute(x509.NameOID.SURNAME, 'CIBG'),
-            
-            # TODO replace value with given name value from record
-            x509.NameAttribute(x509.NameOID.GIVEN_NAME, 'CIBG'),
-
-            # TODO replace value with uzi number from record
-            x509.NameAttribute(x509.NameOID.SERIAL_NUMBER, 'CIBG'),
-        ],
-    )
-    
-    key_usage = x509.KeyUsage(
-        digital_signature=True,
-        content_commitment=False,
-        key_encipherment=False,
-        data_encipherment=False,
-        key_agreement=False,
-        key_cert_sign=False,
-        crl_sign=False,
-        encipher_only=False,
-        decipher_only=False
-    )
-    
-    ext_key_usage = x509.ExtendedKeyUsage([
-        ExtendedKeyUsageOID.CLIENT_AUTH,
-        ExtendedKeyUsageOID.EMAIL_PROTECTION,
-        ObjectIdentifier("1.3.6.1.4.1.311.10.3.12")  # szOID_KP_DOCUMENT_SIGNING
-    ])
-    cert_builder = (
-        x509.CertificateBuilder(
-            issuer_name=ca_cert.subject,
-            subject_name=subject_name,
-            serial_number=x509.random_serial_number(),
-            not_valid_before=datetime.now(timezone.utc),
-            not_valid_after=datetime.now(timezone.utc) + settings.ca.cert_lifetime,
-            public_key=csr.public_key(),
-        )
-        .add_extension(certificate_policies_extension, critical=False)
-        .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
-        .add_extension(san_extension, critical=False)
-        .add_extension(key_usage, critical=True)
-        .add_extension(ext_key_usage, critical=True)
-        .add_extension(
-            x509.CRLDistributionPoints(
-                distribution_points=[
-                    x509.DistributionPoint(
-                        full_name=[x509.UniformResourceIdentifier(str(settings.external_url).removesuffix('/') + f'/ca/{ca_id}/crl')],
-                        relative_name=None,
-                        reasons=None,
-                        crl_issuer=None,
-                    )
-                ]
-            ),
-            critical=False,
-        )
-    )
-
-    cert = cert_builder.sign(private_key=ca_key, algorithm=hashes.SHA512())
+    cert = UZICertificateGenerator(
+        settings.ca.cert_lifetime,
+        ca_key,
+        ca_cert,
+    ).generate(csr)
 
     cert_pem = cert.public_bytes(serialization.Encoding.PEM)
     ca_cert_pem = ca_cert.public_bytes(serialization.Encoding.PEM)
