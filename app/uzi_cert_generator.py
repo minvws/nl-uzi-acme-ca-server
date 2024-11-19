@@ -17,19 +17,11 @@ class UZICertificateGenerator:
         self._ca_cert = ca_cert
 
     def _build(self, csr: x509.CertificateSigningRequest) -> x509.CertificateBuilder:
-        certificate_policies_extension = x509.Extension(
-            oid=ExtensionOID.CERTIFICATE_POLICIES,
-            critical=False,
-            # TODO Replace with policies
-            value=b'',
-        )
+        # Replace value with uzi policies
+        certificate_policies_extension = x509.CertificatePolicies([])
 
-        san_extension = x509.Extension(
-            oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-            critical=False,
-            # TODO replace with uzi seq bytes
-            value=b'',
-        )
+        # TODO replace value with uzi seq bytes
+        san_extension = x509.SubjectAlternativeName([])
 
         subject_name = x509.Name(
             [
@@ -46,7 +38,6 @@ class UZICertificateGenerator:
                 x509.NameAttribute(x509.NameOID.SERIAL_NUMBER, 'CIBG'),
             ],
         )
-
         key_usage = x509.KeyUsage(
             digital_signature=True,
             content_commitment=False,
@@ -67,7 +58,7 @@ class UZICertificateGenerator:
             ]
         )
 
-        not_valid_after = (datetime.now(timezone.utc) + self._lifetime,)
+        not_valid_after = datetime.now(timezone.utc) + self._lifetime
         builder = (
             x509.CertificateBuilder(
                 issuer_name=self._ca_cert.subject,
