@@ -1,4 +1,4 @@
-from cryptography.x509.oid import ExtendedKeyUsageOID, ObjectIdentifier, ExtensionOID
+from cryptography.x509.oid import ExtendedKeyUsageOID, ObjectIdentifier
 from cryptography import x509
 from datetime import datetime, timedelta, timezone
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
@@ -10,6 +10,8 @@ class UZICertificateGenerator:
 
     _ca_key: PrivateKeyTypes
     _ca_cert: x509.Certificate
+
+    _SZOID_KP_DOCUMENT_SIGNING_ID = ObjectIdentifier('1.3.6.1.4.1.311.10.3.12')
 
     def __init__(self, lifetime: timedelta, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate) -> None:
         self._lifetime = lifetime
@@ -54,7 +56,7 @@ class UZICertificateGenerator:
             [
                 ExtendedKeyUsageOID.CLIENT_AUTH,
                 ExtendedKeyUsageOID.EMAIL_PROTECTION,
-                ObjectIdentifier('1.3.6.1.4.1.311.10.3.12'),  # szOID_KP_DOCUMENT_SIGNING
+                self._SZOID_KP_DOCUMENT_SIGNING_ID,
             ]
         )
 

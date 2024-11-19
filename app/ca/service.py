@@ -68,6 +68,8 @@ def load_ca_sync(*, cert_pem, key_pem_enc):
 
 def generate_cert_sync(*, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, csr: x509.CertificateSigningRequest, subject_domain: str, san_domains: list[str]):
     # TODO Retrieve uzi record here. This can be fetched from the JWT
+    # This is only send across when doing ACME-challenges.
+    # Do we want to pass the same JWT or store it somewhere?
     # record := &uzi.UziRecord{
 	# 	IsTest:          true,
 	# 	Surname:         claim.Surname,
