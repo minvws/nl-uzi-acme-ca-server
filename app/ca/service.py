@@ -10,6 +10,8 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
+from cryptography.x509.oid import ExtendedKeyUsageOID, ObjectIdentifier
+
 from .. import db
 from ..acme.certificate.service import SerialNumberConverter
 from ..config import settings
@@ -65,32 +67,22 @@ def load_ca_sync(*, cert_pem, key_pem_enc):
 
 def generate_cert_sync(*, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, csr: x509.CertificateSigningRequest, subject_domain: str, san_domains: list[str]):
     ca_id = SerialNumberConverter.int2hex(ca_cert.serial_number)
-    from cryptography.x509.oid import ExtendedKeyUsageOID, ObjectIdentifier
-
-
-    # implement this
-    # template := x509.Certificate{
-    # 	Subject: pkix.Name{
-    # 		ExtraNames: []pkix.AttributeTypeAndValue{
-    # 			{Type: []int{2, 5, 4, 5}, Value: record.UziNr},      // Serial Number
-    # 			{Type: []int{2, 5, 4, 4}, Value: record.Surname},    // Surname
-    # 			{Type: []int{2, 5, 4, 42}, Value: record.GivenName}, // Given Name
-    # 		},
-    # 	},
-    # 	ExtraExtensions: []pkix.Extension{
-    # 		{
-    # 			Id:    []int{2, 5, 29, 32},
-    # 			Value: policiesBytes,
-    # 		},
-    # 		{
-    # 			Id:    []int{2, 5, 29, 17},
-    # 			Value: uziSeqBytes,
-    # 		},
-    # 	},
-    # }
+    
+    certificate_policies_extension = x509.Extension(
+        oid=x509.ObjectIdentifier("2.5.29.32"),
+        critical=False,  # Or True if it's a critical extension
+        # TODO Replace with policies
+        value=b''
+    )
     
     
-    
+    # Add Subject Alternative Name extension (OID 2.5.29.17)
+    san_extension = x509.Extension(
+        oid=x509.ObjectIdentifier("2.5.29.17"),
+        critical=False,  # Set to True if it's critical
+        # TODO replace with uzi seq bytes
+        value=b''
+    )
     
     subject_name = x509.Name(
         [
@@ -99,7 +91,15 @@ def generate_cert_sync(*, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, cs
             x509.NameAttribute(x509.NameOID.COMMON_NAME, subject_domain),
             # TODO replace the value with the Entity name in the request
             x509.NameAttribute(x509.NameOID.ORGANIZATION_NAME, 'CIBG'),
+            
+            # TODO replace value with surname value from record
+            x509.NameAttribute(x509.NameOID.SURNAME, 'CIBG'),
+            
+            # TODO replace value with given name value from record
+            x509.NameAttribute(x509.NameOID.GIVEN_NAME, 'CIBG'),
 
+            # TODO replace value with uzi number from record
+            x509.NameAttribute(x509.NameOID.SERIAL_NUMBER, 'CIBG'),
         ],
     )
     
@@ -129,7 +129,9 @@ def generate_cert_sync(*, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, cs
             not_valid_after=datetime.now(timezone.utc) + settings.ca.cert_lifetime,
             public_key=csr.public_key(),
         )
+        .add_extension(certificate_policies_extension, critical=False)
         .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+        .add_extension(san_extension, critical=False)
         .add_extension(key_usage, critical=True)
         .add_extension(ext_key_usage, critical=True)
         .add_extension(
