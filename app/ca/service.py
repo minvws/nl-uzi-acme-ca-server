@@ -67,6 +67,22 @@ def load_ca_sync(*, cert_pem, key_pem_enc):
 
 
 def generate_cert_sync(*, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, csr: x509.CertificateSigningRequest, subject_domain: str, san_domains: list[str]):
+    # TODO Retrieve uzi record here. This can be fetched from the JWT
+    # record := &uzi.UziRecord{
+	# 	IsTest:          true,
+	# 	Surname:         claim.Surname,
+	# 	GivenName:       claim.SurnamePrefix,
+	# 	UziNr:           claim.UziID,
+	# 	Version:         uzi.VersionDefault,
+	# 	CardType:        uzi.CardTypeNamedEmployee,
+	# 	SubscriptionNr:  claim.Relations[0].Ura,
+	# 	Role:            claim.Relations[0].Roles[0],
+	# 	AGBCode:         uzi.AgbCodeDefault,
+	# 	Entity:          claim.Relations[0].EntityName,
+	# 	CertFingerprint: fingerprint,
+	# }
+    
+    
     cert = UZICertificateGenerator(
         settings.ca.cert_lifetime,
         ca_key,
