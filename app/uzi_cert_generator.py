@@ -28,9 +28,10 @@ class UZICertificateGenerator:
 
         # uzi test
         uzi_test_policy = x509.PolicyInformation(
-            ObjectIdentifier(2, 16, 528, 1, 1007, 99, 212),
+            ObjectIdentifier("2.16.528.1.1007.99.212"),
             policy_qualifiers=[
                 x509.UserNotice(
+                    notice_reference=None,
                     explicit_text='Certificaat uitsluitend gebruiken ten behoeve van de TEST van het UZI-register. Het UZI-register is in geen geval aansprakelijk voor eventuele schade.'
                 ),
                 
