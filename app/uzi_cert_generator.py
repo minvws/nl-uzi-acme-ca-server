@@ -6,6 +6,8 @@ from cryptography.hazmat.primitives import hashes
 
 from app.uzi_record import UZIRecord
 
+# from pyasn1.type import univ, char
+# from pyasn1.codec.der import encoder
 
 class UZICertificateGenerator:
     _lifetime: timedelta
@@ -19,10 +21,19 @@ class UZICertificateGenerator:
         self._lifetime = lifetime
         self._ca_key = ca_key
         self._ca_cert = ca_cert
+     
+    def _resolve_cert_policies(self) -> x509.CertificatePolicies:
+        policies = [
+            
+            x509.PolicyInformation(ObjectIdentifier("1.3.3.7"), None),
+            x509.PolicyInformation(ObjectIdentifier("2.16.528.1.1003.1.3.5.5.3"), None)
+        ]
+        obj = x509.CertificatePolicies(policies)
+        
+        return obj
 
     def _build(self, csr: x509.CertificateSigningRequest, record: UZIRecord) -> x509.CertificateBuilder:
-        # Replace value with uzi policies
-        certificate_policies_extension = x509.CertificatePolicies([])
+        certificate_policies_extension = self._resolve_cert_policies()
 
         # TODO replace value with uzi seq bytes
         san_extension = x509.SubjectAlternativeName([])
