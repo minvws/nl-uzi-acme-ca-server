@@ -6,9 +6,6 @@ from cryptography.hazmat.primitives import hashes
 
 from app.uzi_record import UZIRecord
 
-# from pyasn1.type import univ, char
-# from pyasn1.codec.der import encoder
-
 
 class UZICertificateGenerator:
     _lifetime: timedelta
