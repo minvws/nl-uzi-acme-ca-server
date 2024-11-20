@@ -15,6 +15,7 @@ class JWTPayload:
     f9_certificate: str
 
 
+# TODO this is a challenge validator
 class UZIJWTValidator:
     def _decode_jwt(self, token: str):        
         # When this is implemented in production, verify the token key, audience and issuer.

@@ -11,4 +11,3 @@ class UZIRecord:
     role: str
     abg_code: str
     entity: str
-    cert_finger_print: str

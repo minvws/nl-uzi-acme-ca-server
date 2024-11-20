@@ -3,7 +3,7 @@ import secrets
 from datetime import datetime
 from typing import Annotated, Literal, Optional
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from jwcrypto.common import base64url_decode
 from pydantic import BaseModel, conlist, constr
 
@@ -20,6 +20,7 @@ from ..middleware import RequestData, SignedRequest
 class NewOrderDomain(BaseModel):
     type: Literal['dns', 'jwt']  # noqa: A003 (allow shadowing builtin "type")
     value: str
+
 
 class NewOrderPayload(BaseModel):
     identifiers: conlist(NewOrderDomain, min_length=1)
@@ -47,10 +48,7 @@ def order_response(
         'status': status,
         'expires': expires_at,
         'identifiers': [{'type': 'dns', 'value': domain} for domain in domains],
-        'authorizations': [
-            f'{settings.external_url}acme/authorizations/{authz_id}'
-            for authz_id in authz_ids
-        ],
+        'authorizations': [f'{settings.external_url}acme/authorizations/{authz_id}' for authz_id in authz_ids],
         'finalize': f'{settings.external_url}acme/orders/{order_id}/finalize',
         'error': error.value if error else None,
         'notBefore': not_valid_before,
@@ -81,9 +79,7 @@ async def submit_order(response: Response, data: Annotated[RequestData[NewOrderP
         return order_id, authz_ids, chal_ids, chal_tkns
 
     # Per domain, one challenge is created
-    order_id, authz_ids, chal_ids, chal_tkns = await asyncio.to_thread(
-        generate_tokens_sync, domains
-    )
+    order_id, authz_ids, chal_ids, chal_tkns = await asyncio.to_thread(generate_tokens_sync, domains)
 
     async with db.transaction() as sql:
         order_status, expires_at = await sql.record(
@@ -131,9 +127,7 @@ async def view_order(response: Response, order_id: str, data: Annotated[RequestD
     if cert_record:
         cert_sn, not_valid_before, not_valid_after = cert_record
     if err:
-        acme_error = ACMEException(
-            exctype=err.get('type'), detail=err.get('detail'), new_nonce=data.new_nonce
-        )
+        acme_error = ACMEException(exctype=err.get('type'), detail=err.get('detail'), new_nonce=data.new_nonce)
     else:
         acme_error = None
 
@@ -152,7 +146,12 @@ async def view_order(response: Response, order_id: str, data: Annotated[RequestD
 
 
 @api.post('/orders/{order_id}/finalize')
-async def finalize_order(response: Response, order_id: str, data: Annotated[RequestData[FinalizeOrderPayload], Depends(SignedRequest(FinalizeOrderPayload))]):
+async def finalize_order(
+    request: Request,
+    response: Response,
+    order_id: str,
+    data: Annotated[RequestData[FinalizeOrderPayload], Depends(SignedRequest(FinalizeOrderPayload))],
+):
     async with db.transaction(readonly=True) as sql:
         record = await sql.record(
             """
@@ -198,13 +197,14 @@ async def finalize_order(response: Response, order_id: str, data: Annotated[Requ
     authz_ids = [authz_id for authz_id, domain in records]
 
     csr_bytes = base64url_decode(data.payload.csr)
-    
-    csr, csr_pem, subject_domain, san_domains = await check_csr(
-        csr_bytes, ordered_domains=domains, new_nonce=data.new_nonce
-    )
+
+    csr, csr_pem, subject_domain, san_domains = await check_csr(csr_bytes, ordered_domains=domains, new_nonce=data.new_nonce)
 
     try:
         # TODO Inject JWT here via headers. Since this project is not our highest priority, querying the JWT via the challenge would not be sufficient right now
+        jwt = request.headers.get('X-Acme-Jwt')
+        logger.info(f"Received JWT {jwt}")
+
         signed_cert = await ca_service.sign_csr(csr, subject_domain, san_domains)
         err = False
     except ACMEException as e:
