@@ -204,6 +204,7 @@ async def finalize_order(response: Response, order_id: str, data: Annotated[Requ
     )
 
     try:
+        # TODO Inject JWT here via headers. Since this project is not our highest priority, querying the JWT via the challenge would not be sufficient right now
         signed_cert = await ca_service.sign_csr(csr, subject_domain, san_domains)
         err = False
     except ACMEException as e:

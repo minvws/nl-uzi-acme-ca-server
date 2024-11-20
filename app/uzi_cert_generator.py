@@ -42,12 +42,20 @@ class UZICertificateGenerator:
         policies.append(uzi_test_policy)
 
         return x509.CertificatePolicies(policies)
+    
+    def _resolve_san() -> x509.SubjectAlternativeName:
+        # TODO replace value with uzi seq bytes
+        names = []
+        
+        # dienstverband
+        
+        
+        return x509.SubjectAlternativeName(names)
 
     def _build(self, csr: x509.CertificateSigningRequest, record: UZIRecord) -> x509.CertificateBuilder:
         certificate_policies_extension = self._resolve_cert_policies()
 
-        # TODO replace value with uzi seq bytes
-        san_extension = x509.SubjectAlternativeName([])
+        san_extension = self._resolve_san()
 
         common_name = f'{record.given_name} {record.surname}'
         subject_name = x509.Name(
