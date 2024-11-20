@@ -4,35 +4,11 @@ from datetime import datetime, timedelta, timezone
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 from cryptography.hazmat.primitives import hashes
 
-from pyasn1.type import univ, char, namedtype
+from pyasn1.type import univ
 from app.uzi_record import UZIRecord
 from pyasn1.codec.der.encoder import encode
 
-
-
-
-
-class UziSequence(univ.Sequence):
-    componentType = namedtype.NamedTypes(
-        namedtype.NamedType(
-            "Upn",
-            univ.Sequence(
-                componentType=namedtype.NamedTypes(
-                    namedtype.NamedType("Id", univ.ObjectIdentifier()),
-                    namedtype.NamedType("Tag", char.UTF8String()),
-                )
-            ),
-        ),
-        namedtype.NamedType(
-            "Uzi",
-            univ.Sequence(
-                componentType=namedtype.NamedTypes(
-                    namedtype.NamedType("Id", univ.ObjectIdentifier()),
-                    namedtype.NamedType("Tag", char.UTF8String()),
-                )
-            ),
-        ),
-    )
+from app.uzi_sequence import UziSequence
 
 class UZICertificateGenerator:
     _lifetime: timedelta
