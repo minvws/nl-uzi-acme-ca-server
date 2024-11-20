@@ -47,8 +47,6 @@ class UZICertificateGenerator:
         return x509.CertificatePolicies(policies)
     
     def _resolve_san(self, record: UZIRecord) -> x509.SubjectAlternativeName:
-        
-        
         uzi_seq = UziSequence()
         upn_id = univ.ObjectIdentifier("1.3.6.1.4.1.311.20.2.3")
         uzi_seq['Upn']['Id'] = upn_id
