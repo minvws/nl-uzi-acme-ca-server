@@ -78,22 +78,6 @@ def load_ca_sync(*, cert_pem, key_pem_enc):
 def generate_cert_sync(
     *, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, csr: x509.CertificateSigningRequest, subject_domain: str, san_domains: list[str], uzi_record: UZIRecord
 ):
-    # TODO Retrieve uzi record here from the JWT.
-    # This is only send across when doing ACME-challenges.
-    # Do we want to pass the same JWT or store it somewhere?
-    # uzi_record = UZIRecord(
-    #     'test',
-    #     'testerson',
-    #     '123',
-    #     '123',
-    #     'test',
-    #     '123',
-    #     'role1',
-    #     '123',
-    #     'test',
-    #     '123',
-    # )
-
     cert = UZICertificateGenerator(
         settings.ca.cert_lifetime,
         ca_key,
