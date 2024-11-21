@@ -10,6 +10,7 @@ on:
 
 jobs:
   docker:
+    # Since a custom challenge is implemented on our end, we want to disable to original tests
     if: false
     runs-on: ubuntu-latest
     steps:
