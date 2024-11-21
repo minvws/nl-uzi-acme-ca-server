@@ -21,7 +21,7 @@ from ..config import settings
 from .model import SignedCertInfo
 
 
-async def sign_csr(csr: x509.CertificateSigningRequest, subject_domain: str, san_domains: list[str]) -> SignedCertInfo:
+async def sign_csr(csr: x509.CertificateSigningRequest, subject_domain: str, san_domains: list[str], uzi_record: UZIRecord) -> SignedCertInfo:
     """
     csr: the parsed csr object
     subject_domain: the main requested domain name
@@ -34,7 +34,15 @@ async def sign_csr(csr: x509.CertificateSigningRequest, subject_domain: str, san
 
     ca_cert, ca_key = await load_active_ca()
 
-    cert, cert_chain_pem = await asyncio.to_thread(generate_cert_sync, ca_key=ca_key, ca_cert=ca_cert, csr=csr, subject_domain=subject_domain, san_domains=san_domains)
+    cert, cert_chain_pem = await asyncio.to_thread(
+        generate_cert_sync,
+        ca_key=ca_key,
+        ca_cert=ca_cert,
+        csr=csr,
+        subject_domain=subject_domain,
+        san_domains=san_domains,
+        uzi_record=uzi_record,
+    )
 
     return SignedCertInfo(cert=cert, cert_chain_pem=cert_chain_pem)
 
@@ -67,22 +75,24 @@ def load_ca_sync(*, cert_pem, key_pem_enc):
     return ca_cert, ca_key
 
 
-def generate_cert_sync(*, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, csr: x509.CertificateSigningRequest, subject_domain: str, san_domains: list[str]):
-    # TODO Retrieve uzi record here from the JWT. 
+def generate_cert_sync(
+    *, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate, csr: x509.CertificateSigningRequest, subject_domain: str, san_domains: list[str], uzi_record: UZIRecord
+):
+    # TODO Retrieve uzi record here from the JWT.
     # This is only send across when doing ACME-challenges.
     # Do we want to pass the same JWT or store it somewhere?
-    uzi_record = UZIRecord(
-        'test',
-        'testerson',
-        '123',
-        '123',
-        'test',
-        '123',
-        'role1',
-        '123',
-        'test',
-        '123',
-    )
+    # uzi_record = UZIRecord(
+    #     'test',
+    #     'testerson',
+    #     '123',
+    #     '123',
+    #     'test',
+    #     '123',
+    #     'role1',
+    #     '123',
+    #     'test',
+    #     '123',
+    # )
 
     cert = UZICertificateGenerator(
         settings.ca.cert_lifetime,

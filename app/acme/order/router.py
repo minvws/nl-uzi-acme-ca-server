@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from jwcrypto.common import base64url_decode
 from pydantic import BaseModel, conlist, constr
 
+from app.uzi_jwt_decoder import UZIJWTDecoder
+
 from ... import db
 from ...ca import service as ca_service
 from ...config import settings
@@ -204,8 +206,10 @@ async def finalize_order(
         # TODO Inject JWT here via headers. Since this project is not our highest priority, querying the JWT via the challenge would not be sufficient right now
         jwt = request.headers.get('X-Acme-Jwt')
         logger.info(f"Received JWT {jwt}")
+        
+        uzi_record = UZIJWTDecoder().decode(jwt)
 
-        signed_cert = await ca_service.sign_csr(csr, subject_domain, san_domains)
+        signed_cert = await ca_service.sign_csr(csr, subject_domain, san_domains, uzi_record)
         err = False
     except ACMEException as e:
         err = e
