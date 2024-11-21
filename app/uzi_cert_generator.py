@@ -1,13 +1,13 @@
+from datetime import datetime, timedelta, timezone
+
 from cryptography.x509.oid import ExtendedKeyUsageOID, ObjectIdentifier
 from cryptography import x509
-from datetime import datetime, timedelta, timezone
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 from cryptography.hazmat.primitives import hashes
-
-from pyasn1.type import univ
-from app.uzi_record import UZIRecord
 from pyasn1.codec.der.encoder import encode
+from pyasn1.type import univ
 
+from app.uzi_record import UZIRecord
 from app.uzi_sequence import UziSequence
 
 
@@ -30,13 +30,16 @@ class UZICertificateGenerator:
             x509.PolicyInformation(ObjectIdentifier('2.16.528.1.1003.1.3.5.5.3'), None),
         ]
 
+        policy_user_notice = (
+            'Certificaat uitsluitend gebruiken ten behoeve van de TEST van het UZI-register.' + 'Het UZI-register is in geen geval aansprakelijk voor eventuele schade.'
+        )
         # uzi test
         uzi_test_policy = x509.PolicyInformation(
             ObjectIdentifier('2.16.528.1.1007.99.212'),
             policy_qualifiers=[
                 x509.UserNotice(
                     notice_reference=None,
-                    explicit_text='Certificaat uitsluitend gebruiken ten behoeve van de TEST van het UZI-register. Het UZI-register is in geen geval aansprakelijk voor eventuele schade.',
+                    explicit_text=policy_user_notice,
                 ),
                 # Interpret the string as CPS URI
                 'https://acceptatie.zorgcsp.nl/cps/uzi-register.html',

@@ -1,6 +1,8 @@
 from typing import Any
-from app.uzi_record import UZIRecord
+
 import jwt
+
+from app.uzi_record import UZIRecord
 
 
 class UZIJWTDecoder:
