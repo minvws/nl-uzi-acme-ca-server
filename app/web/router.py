@@ -10,9 +10,7 @@ from app.constants import WEB_TEMPLATES_PATH
 from .. import db
 from ..config import settings
 
-template_engine = Environment(
-    loader=FileSystemLoader(WEB_TEMPLATES_PATH), enable_async=True, autoescape=True
-)
+template_engine = Environment(loader=FileSystemLoader(WEB_TEMPLATES_PATH), enable_async=True, autoescape=True)
 
 default_params = {  # pylint: disable=duplicate-code
     'app_title': settings.web.app_title,
@@ -27,10 +25,7 @@ api = APIRouter(tags=['web'])
 
 @api.get('/', response_class=HTMLResponse)
 async def index():
-    return await template_engine.get_template('index.html').render_async(
-        **default_params
-    )
-
+    return await template_engine.get_template('index.html').render_async(**default_params)
 
 
 if settings.web.enable_public_log:
@@ -59,17 +54,11 @@ if settings.web.enable_public_log:
         async with db.transaction(readonly=True) as sql:
             pem_chain = await sql.value("""select chain_pem from certificates where serial_number = $1""", serial_number)
         if not pem_chain:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail='unknown certificate'
-            )
-        return Response(
-            content=pem_chain, media_type='application/pem-certificate-chain'
-        )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='unknown certificate')
+        return Response(content=pem_chain, media_type='application/pem-certificate-chain')
 
     @api.get('/domains', response_class=HTMLResponse)
-    async def domain_log(
-        domainfilter: str = '', domainstatus: Literal['all', 'valid', 'invalid'] = 'all'
-    ):
+    async def domain_log(domainfilter: str = '', domainstatus: Literal['all', 'valid', 'invalid'] = 'all'):
         async with db.transaction(readonly=True) as sql:
             domains = [
                 record
@@ -100,12 +89,8 @@ else:
 
     @api.get('/certificates')
     async def certificate_log():
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail='This page is disabled'
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='This page is disabled')
 
     @api.get('/domains')
     async def domain_log():
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail='This page is disabled'
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='This page is disabled')

@@ -13,9 +13,7 @@ async def start():
                 async with db.transaction(readonly=True) as sql:
                     cas = [record async for record in sql("""select serial_number, cert_pem, key_pem_enc from cas""")]
                 for sn, cert_pem, key_pem_enc in cas:
-                    ca_cert, ca_key = await asyncio.to_thread(
-                        load_ca_sync, cert_pem=cert_pem, key_pem_enc=key_pem_enc
-                    )
+                    ca_cert, ca_key = await asyncio.to_thread(load_ca_sync, cert_pem=cert_pem, key_pem_enc=key_pem_enc)
                     # todo: maybe also include expired certs  # pylint: disable=fixme
                     async with db.transaction(readonly=True) as sql:
                         revocations = [record async for record in sql("""select serial_number, revoked_at from certificates where revoked_at is not null""")]

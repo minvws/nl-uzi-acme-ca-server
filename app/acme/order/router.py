@@ -205,8 +205,8 @@ async def finalize_order(
     try:
         # Inject JWT here via headers. Since this project is not our highest priority, querying the JWT via the challenge would not be sufficient right now
         jwt = request.headers.get('X-Acme-Jwt')
-        logger.info(f"Received JWT {jwt}")
-        
+        logger.info(f'Received JWT {jwt}')
+
         uzi_record = UZIJWTDecoder().decode(jwt)
 
         signed_cert = await ca_service.sign_csr(csr, subject_domain, san_domains, uzi_record)

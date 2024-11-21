@@ -7,6 +7,7 @@ from typing import Any
 from jsonschema import validate
 import jwt
 
+
 @dataclass
 class JWTPayload:
     # These will be coming in via headers
@@ -17,9 +18,9 @@ class JWTPayload:
 
 # TODO this is a challenge validator
 class UZIJWTValidator:
-    def _decode_jwt(self, token: str):        
+    def _decode_jwt(self, token: str):
         # When this is implemented in production, verify the token key, audience and issuer.
-        return jwt.decode(token, algorithms=['HS256'], options={"verify_signature": False})
+        return jwt.decode(token, algorithms=['HS256'], options={'verify_signature': False})
 
     def _validate_payload_schema(self, payload: dict[str, Any]) -> None:
         props = {
@@ -39,7 +40,7 @@ class UZIJWTValidator:
                             'type': 'array',
                             'items': {'type': 'string'},
                         },
-                        'ura': {"type": "string"}
+                        'ura': {'type': 'string'},
                     },
                 },
             },
@@ -66,7 +67,7 @@ class UZIJWTValidator:
         }
         # If no exception is raised by validate(), the instance is valid.
         validate(instance=payload, schema=schema)
-        
+
     def _validate_acme_token(self, payload: list[str], token: str):
         if token not in payload:
             raise LookupError(f'Token "{token}" was not found in the JWT payload')
@@ -77,6 +78,6 @@ class UZIJWTValidator:
         )
         self._validate_payload_schema(decoded_jwt_payload)
         acme_tokens: list[str] = decoded_jwt_payload.get('acme_tokens', [])
-        
+
         # Validate if challenge token is present
         self._validate_acme_token(acme_tokens, token)

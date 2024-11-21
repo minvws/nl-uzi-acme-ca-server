@@ -7,9 +7,7 @@ from fastapi import status
 from ..exceptions import ACMEException
 
 
-async def check_challenge_is_fulfilled(
-    *, domain: str, token: str, jwk: jwcrypto.jwk.JWK, new_nonce: str = None
-):
+async def check_challenge_is_fulfilled(*, domain: str, token: str, jwk: jwcrypto.jwk.JWK, new_nonce: str = None):
     for _ in range(3):  # 3x retry
         err = True
         try:
@@ -23,15 +21,11 @@ async def check_challenge_is_fulfilled(
                 follow_redirects=False,
                 trust_env=False,  # do not load proxy information from env vars
             ) as client:
-                res = await client.get(
-                    f'http://{domain}:80/.well-known/acme-challenge/{token}'
-                )
+                res = await client.get(f'http://{domain}:80/.well-known/acme-challenge/{token}')
                 actual_text_content = res.text.rstrip()
                 expected_text_content = f'{token}.{jwk.thumbprint()}'
 
-                if (
-                    res.status_code == 200 and actual_text_content == expected_text_content
-                ):
+                if res.status_code == 200 and actual_text_content == expected_text_content:
                     err = False
                 else:
                     err = ACMEException(

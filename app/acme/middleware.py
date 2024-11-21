@@ -102,9 +102,7 @@ class SignedRequest:  # pylint: disable=too-few-public-methods
         protected_data = Protected(**json_attrs)
 
         # Scheme might be different because of reverse proxy forwarding
-        if self._schemeless_url(str(protected_data.url)) != self._schemeless_url(
-            str(request.url)
-        ):
+        if self._schemeless_url(str(protected_data.url)) != self._schemeless_url(str(request.url)):
             raise ACMEException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 exctype='unauthorized',
@@ -177,10 +175,6 @@ class SignedRequest:  # pylint: disable=too-few-public-methods
 
         response.headers['Replay-Nonce'] = new_nonce
         # use append because there can be multiple Link-Headers with different rel targets
-        response.headers.append(
-            'Link', f'<{settings.external_url}acme/directory>;rel="index"'
-        )
+        response.headers.append('Link', f'<{settings.external_url}acme/directory>;rel="index"')
 
-        return RequestData[self.payload_model](
-            payload=payload_data, key=key, account_id=account_id, new_nonce=new_nonce
-        )
+        return RequestData[self.payload_model](payload=payload_data, key=key, account_id=account_id, new_nonce=new_nonce)

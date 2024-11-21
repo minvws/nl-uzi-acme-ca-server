@@ -17,9 +17,7 @@ class SerialNumberConverter:
         return int(number, 16)
 
 
-async def check_csr(
-    csr_der: bytes, ordered_domains: list[str], new_nonce: str | None = None
-):
+async def check_csr(csr_der: bytes, ordered_domains: list[str], new_nonce: str | None = None):
     """
     check csr and return contained values
     """
@@ -37,9 +35,7 @@ async def check_csr(
     # TODO it fails on this line
     sans = csr.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value.get_values_for_type(x509.DNSName)
     csr_domains = set(sans)
-    subject_candidates = csr.subject.get_attributes_for_oid(
-        x509.oid.NameOID.COMMON_NAME
-    )
+    subject_candidates = csr.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
     if subject_candidates:
         subject_domain = subject_candidates[0].value
         csr_domains.add(subject_domain)
@@ -53,7 +49,6 @@ async def check_csr(
     else:
         subject_domain = sans[0]
 
-    
     # Previously, we ordered certificates for a certain set of domains. This has to match in the CSR.
     # This is not relevant for us.
     #

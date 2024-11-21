@@ -33,13 +33,9 @@ class CaSettings(BaseSettings):
                 logger.fatal('Env Var ca_encryption_key is missing, use this freshly generated key: %s', Fernet.generate_key().decode())
                 sys.exit(1)
             if self.cert_lifetime.days < 1:
-                raise ValueError(
-                    f'Cert lifetime for internal CA must be at least one day, not: {str(self.cert_lifetime)}'
-                )
+                raise ValueError(f'Cert lifetime for internal CA must be at least one day, not: {str(self.cert_lifetime)}')
             if self.crl_lifetime.days < 1:
-                raise ValueError(
-                    f'CRL lifetime for internal CA must be at least one day, not: {str(self.crl_lifetime)}'
-                )
+                raise ValueError(f'CRL lifetime for internal CA must be at least one day, not: {str(self.crl_lifetime)}')
         return self
 
 
@@ -73,15 +69,9 @@ class MailSettings(BaseSettings):
     @model_validator(mode='after')
     def valid_check(self) -> 'MailSettings':
         if self.enabled and (not self.host or not self.sender):
-            raise ValueError(
-                'Mail parameters (mail_host, mail_sender) are missing as SMTP is enabled'
-            )
-        if (self.username and not self.password) or (
-            not self.username and self.password
-        ):
-            raise ValueError(
-                'Either no mail auth must be specifid or username and password must be provided'
-            )
+            raise ValueError('Mail parameters (mail_host, mail_sender) are missing as SMTP is enabled')
+        if (self.username and not self.password) or (not self.username and self.password):
+            raise ValueError('Either no mail auth must be specifid or username and password must be provided')
         if self.enabled and not self.port:
             self.port = {'tls': 465, 'starttls': 587, 'plain': 25}[self.encryption]
         return self
@@ -116,13 +106,9 @@ class Settings(BaseSettings):
             logger.warning('Env Var "external_url" is not HTTPS. This is insecure!')
         if self.mail.warn_before_cert_expires and self.ca.enabled and self.mail.enabled:
             if self.mail.warn_before_cert_expires >= self.ca.cert_lifetime:
-                raise ValueError(
-                    'Env var web_warn_before_cert_expires cannot be greater than ca_cert_lifetime'
-                )
+                raise ValueError('Env var web_warn_before_cert_expires cannot be greater than ca_cert_lifetime')
             if self.mail.warn_before_cert_expires.days > self.ca.cert_lifetime.days / 2:
-                logger.warning(
-                    'Env var mail_warn_before_cert_expires should be more than half of the cert lifetime'
-                )
+                logger.warning('Env var mail_warn_before_cert_expires should be more than half of the cert lifetime')
         return self
 
 

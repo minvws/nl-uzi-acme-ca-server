@@ -64,9 +64,7 @@ if settings.ca.enabled:
             async with db.transaction() as sql:
                 ok = await sql.value("""select count(serial_number)=1 from cas where active=true""")
             if not ok:
-                raise ValueError(
-                    'internal ca is enabled but no CA certificate is registered and active. Please import one first.'
-                )
+                raise ValueError('internal ca is enabled but no CA certificate is registered and active. Please import one first.')
 
         await cronjob.start()
 else:

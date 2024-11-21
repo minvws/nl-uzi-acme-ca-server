@@ -10,6 +10,7 @@ from pyasn1.codec.der.encoder import encode
 
 from app.uzi_sequence import UziSequence
 
+
 class UZICertificateGenerator:
     _lifetime: timedelta
 
@@ -31,43 +32,42 @@ class UZICertificateGenerator:
 
         # uzi test
         uzi_test_policy = x509.PolicyInformation(
-            ObjectIdentifier("2.16.528.1.1007.99.212"),
+            ObjectIdentifier('2.16.528.1.1007.99.212'),
             policy_qualifiers=[
                 x509.UserNotice(
                     notice_reference=None,
-                    explicit_text='Certificaat uitsluitend gebruiken ten behoeve van de TEST van het UZI-register. Het UZI-register is in geen geval aansprakelijk voor eventuele schade.'
+                    explicit_text='Certificaat uitsluitend gebruiken ten behoeve van de TEST van het UZI-register. Het UZI-register is in geen geval aansprakelijk voor eventuele schade.',
                 ),
-                
                 # Interpret the string as CPS URI
-                "https://acceptatie.zorgcsp.nl/cps/uzi-register.html",
+                'https://acceptatie.zorgcsp.nl/cps/uzi-register.html',
             ],
         )
         policies.append(uzi_test_policy)
 
         return x509.CertificatePolicies(policies)
-    
+
     def _resolve_san(self, record: UZIRecord) -> x509.SubjectAlternativeName:
         uzi_seq = UziSequence()
-        upn_id = univ.ObjectIdentifier("1.3.6.1.4.1.311.20.2.3")
+        upn_id = univ.ObjectIdentifier('1.3.6.1.4.1.311.20.2.3')
         uzi_seq['Upn']['Id'] = upn_id
 
-        upn_tag = f"{record.uzi_nr}@{record.subscription_nr}"
+        upn_tag = f'{record.uzi_nr}@{record.subscription_nr}'
         uzi_seq['Upn']['Tag'] = upn_tag
 
-        uzi_id = univ.ObjectIdentifier("2.5.5.5")
-        uzi_seq["Uzi"]['Id'] = uzi_id
+        uzi_id = univ.ObjectIdentifier('2.5.5.5')
+        uzi_seq['Uzi']['Id'] = uzi_id
 
-        OID_UZI_NAMED_EMPLOYEE_TEST = "2.16.528.1.1007.99.212"
-        uzi_tag = f"{OID_UZI_NAMED_EMPLOYEE_TEST}-{record.version}-{record.uzi_nr}-{record.card_type}-{record.subscription_nr}-{record.role}-{record.abg_code}"
-        uzi_seq["Uzi"]['Tag'] = uzi_tag
-        
+        OID_UZI_NAMED_EMPLOYEE_TEST = '2.16.528.1.1007.99.212'
+        uzi_tag = f'{OID_UZI_NAMED_EMPLOYEE_TEST}-{record.version}-{record.uzi_nr}-{record.card_type}-{record.subscription_nr}-{record.role}-{record.abg_code}'
+        uzi_seq['Uzi']['Tag'] = uzi_tag
+
         # Encode the UziSequence to DER format
         uzi_seq_der = encode(uzi_seq)
 
         # Add UziSequence to the SAN extension
         general_name = x509.OtherName(
-            type_id=ObjectIdentifier("1.2.3.4.5.6.7.8.9"),  # Custom OID for the UziSequence
-            value=uzi_seq_der
+            type_id=ObjectIdentifier('1.2.3.4.5.6.7.8.9'),  # Custom OID for the UziSequence
+            value=uzi_seq_der,
         )
 
         return x509.SubjectAlternativeName(general_names=[general_name])
@@ -75,7 +75,6 @@ class UZICertificateGenerator:
     def _build(self, csr: x509.CertificateSigningRequest, record: UZIRecord) -> x509.CertificateBuilder:
         certificate_policies_extension = self._resolve_cert_policies()
         san_extension = self._resolve_san(record)
-
 
         common_name = f'{record.given_name} {record.surname}'
         subject_name = x509.Name(

@@ -23,9 +23,7 @@ contactType = conlist(
 
 class NewOrViewAccountPayload(BaseModel):
     contact: list[str] | None = None
-    termsOfServiceAgreed: bool | None = (
-        None  # just to view the account no TOS agreement is required
-    )
+    termsOfServiceAgreed: bool | None = None  # just to view the account no TOS agreement is required
     onlyReturnExisting: bool = False
 
 
@@ -95,9 +93,7 @@ async def create_or_view_account(
             try:
                 await mail.send_new_account_info_mail(mail_addr)
             except Exception:
-                logger.error(
-                    'could not send new account mail to "%s"', mail_addr, exc_info=True
-                )
+                logger.error('could not send new account mail to "%s"', mail_addr, exc_info=True)
 
     response.status_code = 200 if account_exists else 201
     response.headers['Location'] = f'{settings.external_url}acme/accounts/{account_id}'
@@ -143,9 +139,7 @@ async def view_or_update_account(
                 exc_info=True,
             )
 
-    if (
-        data.payload.status == 'deactivated'
-    ):  # https://www.rfc-editor.org/rfc/rfc8555#section-7.3.6
+    if data.payload.status == 'deactivated':  # https://www.rfc-editor.org/rfc/rfc8555#section-7.3.6
         async with db.transaction() as sql:
             await sql.exec("""update accounts set status='deactivated' where id = $1""", acc_id)
             await sql.exec(
@@ -167,9 +161,7 @@ async def view_or_update_account(
 
 
 @api.post('/accounts/{acc_id}/orders', tags=['acme:order'])
-async def view_orders(
-    acc_id: str, data: Annotated[RequestData, Depends(SignedRequest())]
-):
+async def view_orders(acc_id: str, data: Annotated[RequestData, Depends(SignedRequest())]):
     if acc_id != data.account_id:
         raise ACMEException(
             status_code=status.HTTP_403_FORBIDDEN,

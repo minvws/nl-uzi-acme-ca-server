@@ -85,9 +85,7 @@ async def start():
                             async with db.transaction() as sql:
                                 await sql.exec("""update certificates set user_informed_cert_has_expired=true where serial_number=$1""", serial_number)
             except Exception:
-                logger.error(
-                    'could not inform about expiring certificates', exc_info=True
-                )
+                logger.error('could not inform about expiring certificates', exc_info=True)
             finally:
                 await asyncio.sleep(1 * 60 * 60)
 

@@ -94,7 +94,7 @@ async def verify_challenge(
             jwt = request.headers.get('X-Acme-Jwt')
             cert = request.headers.get('X-Acme-Cert')
             f9_cert = request.headers.get('X-Acme-F9Cert')
-            
+
             challenge_token = token
             payload = JWTPayload(
                 jwt,
@@ -102,7 +102,7 @@ async def verify_challenge(
                 f9_cert,
             )
             validator = UZIJWTValidator()
-            
+
             # This will raise an exception if it fails
             validator.validate(payload, challenge_token)
             err = False

@@ -16,9 +16,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):  # pylint: disable=too-few-
         self.csp = content_security_policy
         self.pp = permissions_policy
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """Dispatch of the middleware.
 
         :param request: Incoming request
