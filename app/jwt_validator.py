@@ -1,3 +1,5 @@
+# pylint: disable=too-few-public-methods
+#
 # While this file would fit better in the an 'acme/challenge' directory, this currently
 # throws errors, since __init__ modules expect environment variables to be set before the application even runs.
 # Decoupling this from the application run time is something that should do, but should not be under the scope of this PR.

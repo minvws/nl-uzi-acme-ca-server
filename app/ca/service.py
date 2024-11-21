@@ -1,3 +1,5 @@
+# pylint: disable=too-many-arguments,unused-argument
+#
 # this file can be overwritten to provide a custom ca implementation
 # the methods sign_csr() and revoke_cert() must be implemented with matching function signatures
 # set env var CA_ENABLED=False when providing a custom ca implementation

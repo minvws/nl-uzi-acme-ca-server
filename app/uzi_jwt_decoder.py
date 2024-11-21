@@ -1,3 +1,4 @@
+# pylint: disable=too-few-public-methods
 from typing import Any
 
 import jwt

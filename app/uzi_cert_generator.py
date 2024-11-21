@@ -1,3 +1,4 @@
+# pylint: disable=too-few-public-methods
 from datetime import datetime, timedelta, timezone
 
 from cryptography.x509.oid import ExtendedKeyUsageOID, ObjectIdentifier
@@ -18,6 +19,7 @@ class UZICertificateGenerator:
     _ca_cert: x509.Certificate
 
     _SZOID_KP_DOCUMENT_SIGNING_ID = ObjectIdentifier('1.3.6.1.4.1.311.10.3.12')
+    _OID_UZI_NAMED_EMPLOYEE_TEST = '2.16.528.1.1007.99.212'
 
     def __init__(self, lifetime: timedelta, ca_key: PrivateKeyTypes, ca_cert: x509.Certificate) -> None:
         self._lifetime = lifetime
@@ -60,8 +62,7 @@ class UZICertificateGenerator:
         uzi_id = univ.ObjectIdentifier('2.5.5.5')
         uzi_seq['Uzi']['Id'] = uzi_id
 
-        OID_UZI_NAMED_EMPLOYEE_TEST = '2.16.528.1.1007.99.212'
-        uzi_tag = f'{OID_UZI_NAMED_EMPLOYEE_TEST}-{record.version}-{record.uzi_nr}-{record.card_type}-{record.subscription_nr}-{record.role}-{record.abg_code}'
+        uzi_tag = f'{self._OID_UZI_NAMED_EMPLOYEE_TEST}-{record.version}-{record.uzi_nr}-{record.card_type}-{record.subscription_nr}-{record.role}-{record.abg_code}'
         uzi_seq['Uzi']['Tag'] = uzi_tag
 
         # Encode the UziSequence to DER format
