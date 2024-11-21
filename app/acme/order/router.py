@@ -203,7 +203,7 @@ async def finalize_order(
     csr, csr_pem, subject_domain, san_domains = await check_csr(csr_bytes, ordered_domains=domains, new_nonce=data.new_nonce)
 
     try:
-        # TODO Inject JWT here via headers. Since this project is not our highest priority, querying the JWT via the challenge would not be sufficient right now
+        # Inject JWT here via headers. Since this project is not our highest priority, querying the JWT via the challenge would not be sufficient right now
         jwt = request.headers.get('X-Acme-Jwt')
         logger.info(f"Received JWT {jwt}")
         
