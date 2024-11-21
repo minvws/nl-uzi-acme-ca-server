@@ -19,7 +19,6 @@ SAMPLE_UZI_RECORD = UZIRecord(
     'role1',
     '123',
     'test',
-    '123',
 )
 
 def _generate_root_cert(private_key: rsa.RSAPrivateKey) -> Certificate:

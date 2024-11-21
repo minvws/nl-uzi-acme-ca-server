@@ -1,7 +1,9 @@
+from datetime import datetime, timedelta, timezone
 import json
 from fastapi.testclient import TestClient
 import httpx
 from jwcrypto import jwk, jws
+import jwt
 
 from tests.utils import (
     create_account_response,
@@ -12,6 +14,40 @@ from tests.utils import (
 from jwcrypto.common import json_encode
 
 from unittest import mock
+
+
+def _create_sample_jwt(challenge_tokens: list[str]):
+    jwt_expiry = datetime.now(tz=timezone.utc) + timedelta(minutes=1)
+        
+    jwt_payload = {
+        "aud": "test-audience",
+        "bsn": "958310828",
+        "exp": jwt_expiry,
+        "initials": "R.M.A.",
+        "iss": "https://max.proeftuin.uzi-online.irealisatie.nl",
+        "loa_authn": "http://eidas.europa.eu/LoA/high",
+        "loa_uzi": "http://eidas.europa.eu/LoA/high",
+        "nbf": 1731663196,
+        "relations": [
+            {
+                "entity_name": "De Ziekenboeg",
+                "roles": [
+                    "01.010"
+                ],
+                "ura": "42424242"
+            }
+        ],
+        "revocation_token": "40fcf1b4-348c-4dcc-8b17-dc1af7acc559",
+        "sub": "fc3a47226732eade29029aab42257bb7e86767ac8f7cef5f5186a9ef61a5adaa",
+        "surname": "Laar",
+        "surname_prefix": "van",
+        "uzi_id": "999991772",
+        "x5c": "test",
+        "acme_tokens": challenge_tokens
+    }
+    encoded = jwt.encode(jwt_payload, 'secret')
+    
+    return encoded
 
 
 def test_challenge_fulfill(fastapi_testclient: TestClient, jwk_key: jwk.JWK):
@@ -35,9 +71,9 @@ def test_challenge_fulfill(fastapi_testclient: TestClient, jwk_key: jwk.JWK):
     first_challenge = challenges[0]
     challenge_url = first_challenge['url']
     challenge_token = first_challenge['token']
-
-    # Retrieve the domain to put the token in
-    domain = auth_codes_json['identifier']['value']
+    
+    
+    sample_jwt = _create_sample_jwt([challenge_token])
 
     challenge_nonce = create_nonce(fastapi_testclient)
 
@@ -54,20 +90,9 @@ def test_challenge_fulfill(fastapi_testclient: TestClient, jwk_key: jwk.JWK):
 
     jws_serialized = json.loads(jws_object.serialize(compact=False))
 
-    # rstrip the challenge contents like done in production
-    mock_challenge_file_contents = f'{challenge_token}.{jwk_key.thumbprint()}'.rstrip()
-
-    with mock.patch(
-        'app.acme.challenge.service.httpx.AsyncClient.get',
-        return_value=httpx.Response(200, text=mock_challenge_file_contents),
-    ) as mock_get:
-        response = fastapi_testclient.post(
-            challenge_url,
-            headers={'Content-Type': 'application/jose+json'},
-            json=jws_serialized,
-        )
-        assert response.is_success
-
-    mock_get.assert_called_once_with(
-        f'http://{domain}:80/.well-known/acme-challenge/{challenge_token}'
+    response = fastapi_testclient.post(
+        challenge_url,
+        headers={'Content-Type': 'application/jose+json', 'X-Acme-Jwt': sample_jwt},
+        json=jws_serialized,
     )
+    assert response.is_success
