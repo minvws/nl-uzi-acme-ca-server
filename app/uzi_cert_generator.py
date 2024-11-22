@@ -31,11 +31,10 @@ class UZICertificateGenerator:
             x509.PolicyInformation(ObjectIdentifier('1.3.3.7'), None),
             x509.PolicyInformation(ObjectIdentifier('2.16.528.1.1003.1.3.5.5.3'), None),
         ]
+        line1 = 'Certificaat uitsluitend gebruiken ten behoeve van de TEST (uitvoering PoC digitaal ondertekenen) van het UZI-register.'
+        line2 = 'Het UZI-register is in geen geval aansprakelijk voor eventuele schade.'
+        policy_user_notice = line1 + line2
 
-        policy_user_notice = (
-            'Certificaat uitsluitend gebruiken ten behoeve van de TEST (uitvoering PoC digitaal ondertekenen) van het UZI-register.'
-            + 'Het UZI-register is in geen geval aansprakelijk voor eventuele schade.'
-        )
         # uzi test
         uzi_test_policy = x509.PolicyInformation(
             ObjectIdentifier('2.16.528.1.1007.99.212'),
