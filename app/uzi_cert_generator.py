@@ -33,7 +33,8 @@ class UZICertificateGenerator:
         ]
 
         policy_user_notice = (
-            'Certificaat uitsluitend gebruiken ten behoeve van de TEST van het UZI-register.' + 'Het UZI-register is in geen geval aansprakelijk voor eventuele schade.'
+            'Certificaat uitsluitend gebruiken ten behoeve van de TEST (uitvoering PoC digitaal ondertekenen) van het UZI-register.'
+            + 'Het UZI-register is in geen geval aansprakelijk voor eventuele schade.'
         )
         # uzi test
         uzi_test_policy = x509.PolicyInformation(
