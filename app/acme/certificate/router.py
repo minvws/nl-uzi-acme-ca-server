@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, Header, Response, status
 from jwcrypto.common import base64url_decode
 from pydantic import BaseModel, constr
 
-import db
-from ca import service as ca_service
+from ... import db
+from ...ca import service as ca_service
 
 from ..exceptions import ACMEException
 from ..middleware import RequestData, SignedRequest
@@ -40,12 +40,26 @@ async def download_cert(
             data.account_id,
         )
     if not pem_chain:
-        raise ACMEException(status_code=status.HTTP_404_NOT_FOUND, exctype='malformed', detail='specified certificate not found for current account', new_nonce=data.new_nonce)
-    return Response(content=pem_chain, headers=response.headers, media_type='application/pem-certificate-chain')
+        raise ACMEException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            exctype='malformed',
+            detail='specified certificate not found for current account',
+            new_nonce=data.new_nonce,
+        )
+    return Response(
+        content=pem_chain,
+        headers=response.headers,
+        media_type='application/pem-certificate-chain',
+    )
 
 
 @api.post('/revoke-cert', response_class=Response)
-async def revoke_cert(data: Annotated[RequestData[RevokeCertPayload], Depends(SignedRequest(RevokeCertPayload, allow_new_account=True))]):
+async def revoke_cert(
+    data: Annotated[
+        RequestData[RevokeCertPayload],
+        Depends(SignedRequest(RevokeCertPayload, allow_new_account=True)),
+    ],
+):
     """
     https://www.rfc-editor.org/rfc/rfc8555#section-7.6
     """
@@ -69,7 +83,12 @@ async def revoke_cert(data: Annotated[RequestData[RevokeCertPayload], Depends(Si
             jwk_json,
         )
     if not ok:
-        raise ACMEException(status_code=status.HTTP_400_BAD_REQUEST, exctype='alreadyRevoked', detail='cert already revoked or not accessible', new_nonce=data.new_nonce)
+        raise ACMEException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            exctype='alreadyRevoked',
+            detail='cert already revoked or not accessible',
+            new_nonce=data.new_nonce,
+        )
     async with db.transaction(readonly=True) as sql:
         revocations = [(sn, rev_at) async for sn, rev_at in sql("""select serial_number, revoked_at from certificates where revoked_at is not null""")]
         revoked_at = await sql.value("""select now()""")

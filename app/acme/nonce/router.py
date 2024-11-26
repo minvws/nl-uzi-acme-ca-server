@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Response, status
 
-from config import settings
+from ...config import settings
 
 from .service import generate
 

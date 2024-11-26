@@ -5,8 +5,8 @@ from typing import Literal
 from aiosmtplib import SMTP
 from jinja2 import Environment, FileSystemLoader
 
-from config import settings
-from logger import logger
+from ..config import settings
+from ..logger import logger
 
 template_engine = Environment(loader=FileSystemLoader('mail/templates'), enable_async=True, autoescape=True)
 default_params = {  # pylint: disable=duplicate-code
@@ -19,7 +19,12 @@ default_params = {  # pylint: disable=duplicate-code
 Templates = Literal['cert-expired-info', 'cert-expires-warning', 'new-account-info']
 
 
-async def send_mail(receiver: str, template: Templates, subject_vars: dict = None, body_vars: dict = None):
+async def send_mail(
+    receiver: str,
+    template: Templates,
+    subject_vars: dict = None,
+    body_vars: dict = None,
+):
     subject_vars = subject_vars or {}
     subject_vars.update(**default_params)
     body_vars = body_vars or {}
@@ -33,7 +38,10 @@ async def send_mail(receiver: str, template: Templates, subject_vars: dict = Non
     if settings.mail.enabled:
         auth = {}
         if settings.mail.username and settings.mail.password:
-            auth = {'username': settings.mail.username, 'password': settings.mail.password.get_secret_value()}
+            auth = {
+                'username': settings.mail.username,
+                'password': settings.mail.password.get_secret_value(),
+            }
         async with SMTP(
             hostname=settings.mail.host,
             port=settings.mail.port,

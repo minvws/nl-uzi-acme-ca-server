@@ -3,7 +3,7 @@ from typing import Literal
 from fastapi import status
 from fastapi.responses import JSONResponse
 
-from config import settings
+from ..config import settings
 
 AcmeExceptionTypes = Literal[
     'accountDoesNotExist',
@@ -58,7 +58,10 @@ class ACMEException(Exception):
 
     @property
     def value(self):
-        return {'type': 'urn:ietf:params:acme:error:' + self.exc_type, 'detail': self.detail}
+        return {
+            'type': 'urn:ietf:params:acme:error:' + self.exc_type,
+            'detail': self.detail,
+        }
 
     async def as_response(self):
         if not self.new_nonce:

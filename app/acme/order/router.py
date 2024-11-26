@@ -3,14 +3,16 @@ import secrets
 from datetime import datetime
 from typing import Annotated, Literal, Optional
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from jwcrypto.common import base64url_decode
 from pydantic import BaseModel, conlist, constr
 
-import db
-from ca import service as ca_service
-from config import settings
-from logger import logger
+from app.uzi_jwt_decoder import UZIJWTDecoder
+
+from ... import db
+from ...ca import service as ca_service
+from ...config import settings
+from ...logger import logger
 
 from ..certificate.service import SerialNumberConverter, check_csr
 from ..exceptions import ACMEException
@@ -18,8 +20,8 @@ from ..middleware import RequestData, SignedRequest
 
 
 class NewOrderDomain(BaseModel):
-    type: Literal['dns']  # noqa: A003 (allow shadowing builtin "type")
-    value: constr(pattern=f'^{settings.acme.target_domain_regex.pattern}$')
+    type: Literal['dns', 'jwt']  # noqa: A003 (allow shadowing builtin "type")
+    value: str
 
 
 class NewOrderPayload(BaseModel):
@@ -78,6 +80,7 @@ async def submit_order(response: Response, data: Annotated[RequestData[NewOrderP
         chal_tkns = {domain: secrets.token_urlsafe(32) for domain in domains}
         return order_id, authz_ids, chal_ids, chal_tkns
 
+    # Per domain, one challenge is created
     order_id, authz_ids, chal_ids, chal_tkns = await asyncio.to_thread(generate_tokens_sync, domains)
 
     async with db.transaction() as sql:
@@ -114,7 +117,12 @@ async def view_order(response: Response, order_id: str, data: Annotated[RequestD
             data.account_id,
         )
         if not record:
-            raise ACMEException(status_code=status.HTTP_404_NOT_FOUND, exctype='malformed', detail='specified order not found for current account', new_nonce=data.new_nonce)
+            raise ACMEException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                exctype='malformed',
+                detail='specified order not found for current account',
+                new_nonce=data.new_nonce,
+            )
         order_status, expires_at, err = record
         authzs = [row async for row in sql("""select id, domain from authorizations where order_id = $1""", order_id)]
         cert_record = await sql.record("""select serial_number, not_valid_before, not_valid_after from certificates where order_id = $1""", order_id)
@@ -140,7 +148,12 @@ async def view_order(response: Response, order_id: str, data: Annotated[RequestD
 
 
 @api.post('/orders/{order_id}/finalize')
-async def finalize_order(response: Response, order_id: str, data: Annotated[RequestData[FinalizeOrderPayload], Depends(SignedRequest(FinalizeOrderPayload))]):
+async def finalize_order(
+    request: Request,
+    response: Response,
+    order_id: str,
+    data: Annotated[RequestData[FinalizeOrderPayload], Depends(SignedRequest(FinalizeOrderPayload))],
+):
     async with db.transaction(readonly=True) as sql:
         record = await sql.record(
             """
@@ -151,10 +164,20 @@ async def finalize_order(response: Response, order_id: str, data: Annotated[Requ
             data.account_id,
         )
     if not record:
-        raise ACMEException(status_code=status.HTTP_404_NOT_FOUND, exctype='malformed', detail='Unknown order for specified account.', new_nonce=data.new_nonce)
+        raise ACMEException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            exctype='malformed',
+            detail='Unknown order for specified account.',
+            new_nonce=data.new_nonce,
+        )
     order_status, expires_at, is_expired = record
     if order_status != 'ready':
-        raise ACMEException(status_code=status.HTTP_403_FORBIDDEN, exctype='orderNotReady', detail=f'order status is: {order_status}', new_nonce=data.new_nonce)
+        raise ACMEException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            exctype='orderNotReady',
+            detail=f'order status is: {order_status}',
+            new_nonce=data.new_nonce,
+        )
     if is_expired:
         async with db.transaction() as sql:
             await sql.exec(
@@ -180,12 +203,23 @@ async def finalize_order(response: Response, order_id: str, data: Annotated[Requ
     csr, csr_pem, subject_domain, san_domains = await check_csr(csr_bytes, ordered_domains=domains, new_nonce=data.new_nonce)
 
     try:
-        signed_cert = await ca_service.sign_csr(csr, subject_domain, san_domains)
+        # Inject JWT here via headers. Since this project is not our highest priority, querying the JWT via the challenge would not be sufficient right now
+        jwt = request.headers.get('X-Acme-Jwt')
+        logger.info(f'Received JWT {jwt}')
+
+        uzi_record = UZIJWTDecoder().decode(jwt)
+
+        signed_cert = await ca_service.sign_csr(csr, subject_domain, san_domains, uzi_record)
         err = False
     except ACMEException as e:
         err = e
     except Exception as e:
-        err = ACMEException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, exctype='serverInternal', detail=str(e), new_nonce=data.new_nonce)
+        err = ACMEException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            exctype='serverInternal',
+            detail=str(e),
+            new_nonce=data.new_nonce,
+        )
         logger.warning('sign csr failed (account: %s)', data.account_id, exc_info=True)
 
     if err is False:

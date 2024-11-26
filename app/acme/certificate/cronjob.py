@@ -1,9 +1,10 @@
 import asyncio
 
-import db
-import mail
-from config import settings
-from logger import logger
+from ... import db
+from ... import mail
+
+from ...config import settings
+from ...logger import logger
 
 
 async def start():
@@ -47,20 +48,38 @@ async def start():
                 for mail_addr, serial_number, expires_at, is_expired, domains in results:
                     if not is_expired and settings.mail.warn_before_cert_expires:
                         try:
-                            await mail.send_certs_will_expire_warn_mail(receiver=mail_addr, domains=domains, expires_at=expires_at, serial_number=serial_number)
+                            await mail.send_certs_will_expire_warn_mail(
+                                receiver=mail_addr,
+                                domains=domains,
+                                expires_at=expires_at,
+                                serial_number=serial_number,
+                            )
                             ok = True
                         except Exception:
-                            logger.error('could not send_certs_will_expire_warn_mail for "%s"', mail_addr, exc_info=True)
+                            logger.error(
+                                'could not send_certs_will_expire_warn_mail for "%s"',
+                                mail_addr,
+                                exc_info=True,
+                            )
                             ok = False
                         if ok:
                             async with db.transaction() as sql:
                                 await sql.exec("""update certificates set user_informed_cert_will_expire=true where serial_number=$1""", serial_number)
                     if is_expired and settings.mail.notify_when_cert_expired:
                         try:
-                            await mail.send_certs_expired_info_mail(receiver=mail_addr, domains=domains, expires_at=expires_at, serial_number=serial_number)
+                            await mail.send_certs_expired_info_mail(
+                                receiver=mail_addr,
+                                domains=domains,
+                                expires_at=expires_at,
+                                serial_number=serial_number,
+                            )
                             ok = True
                         except Exception:
-                            logger.error('could not send_certs_expired_info_mail for "%s"', mail_addr, exc_info=True)
+                            logger.error(
+                                'could not send_certs_expired_info_mail for "%s"',
+                                mail_addr,
+                                exc_info=True,
+                            )
                             ok = False
                         if ok:
                             async with db.transaction() as sql:

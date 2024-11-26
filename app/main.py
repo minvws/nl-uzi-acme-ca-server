@@ -11,19 +11,23 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
-import acme
-import ca
-import db
-import db.migrations
-import web
-from acme.exceptions import ACMEException
-from config import settings
+from .db import migrations
+
+from . import acme
+from . import ca
+from . import db
+
+from . import web
+
+
+from .acme.exceptions import ACMEException
+from .config import settings
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await db.connect()
-    await db.migrations.run()
+    await migrations.run()
     await ca.init()
     await acme.start_cronjobs()
     yield
@@ -70,11 +74,23 @@ async def acme_exception_handler(request: Request, exc: Exception):
         if isinstance(exc, ACMEException):
             return await exc.as_response()
         elif isinstance(exc, ValidationError):
-            return await ACMEException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, exctype='malformed', detail=exc.json()).as_response()
+            return await ACMEException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                exctype='malformed',
+                detail=exc.json(),
+            ).as_response()
         elif isinstance(exc, HTTPException):
-            return await ACMEException(status_code=exc.status_code, exctype='serverInternal', detail=str(exc.detail)).as_response()
+            return await ACMEException(
+                status_code=exc.status_code,
+                exctype='serverInternal',
+                detail=str(exc.detail),
+            ).as_response()
         else:
-            return await ACMEException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, exctype='serverInternal', detail=str(exc)).as_response()
+            return await ACMEException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                exctype='serverInternal',
+                detail=str(exc),
+            ).as_response()
     else:
         if isinstance(exc, HTTPException):
             return await http_exception_handler(request, exc)

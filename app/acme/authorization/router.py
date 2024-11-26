@@ -3,8 +3,8 @@ from typing import Annotated, Literal, Optional
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 
-import db
-from config import settings
+from ... import db
+from ...config import settings
 
 from ..exceptions import ACMEException
 from ..middleware import RequestData, SignedRequest
@@ -35,9 +35,21 @@ async def view_or_update_authorization(
             data.account_id,
         )
     if record:
-        authz_status, order_status, expires_at, domain, chal_id, chal_token, chal_status, chal_validated_at = record
+        (
+            authz_status,
+            order_status,
+            expires_at,
+            domain,
+            chal_id,
+            chal_token,
+            chal_status,
+            chal_validated_at,
+        ) = record
         if data.payload and data.payload.status == 'deactivated':  # deactivate authz
-            if authz_status in ['pending', 'valid'] and order_status in ['pending', 'ready']:
+            if authz_status in ['pending', 'valid'] and order_status in [
+                'pending',
+                'ready',
+            ]:
                 async with db.transaction() as sql:
                     await sql.exec(
                         """
@@ -62,9 +74,19 @@ async def view_or_update_authorization(
             'challenges': [{k: v for k, v in chal.items() if v is not None}],
         }
     else:
-        raise ACMEException(status_code=status.HTTP_404_NOT_FOUND, exctype='malformed', detail='specified authorization not found for current account', new_nonce=data.new_nonce)
+        raise ACMEException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            exctype='malformed',
+            detail='specified authorization not found for current account',
+            new_nonce=data.new_nonce,
+        )
 
 
 @api.post('/new-authz')
 async def new_pre_authz(data: Annotated[RequestData, Depends(SignedRequest())]):
-    raise ACMEException(status_code=status.HTTP_403_FORBIDDEN, exctype='unauthorized', detail='pre authorization is not supported', new_nonce=data.new_nonce)
+    raise ACMEException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        exctype='unauthorized',
+        detail='pre authorization is not supported',
+        new_nonce=data.new_nonce,
+    )

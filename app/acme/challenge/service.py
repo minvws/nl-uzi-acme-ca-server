@@ -22,7 +22,10 @@ async def check_challenge_is_fulfilled(*, domain: str, token: str, jwk: jwcrypto
                 trust_env=False,  # do not load proxy information from env vars
             ) as client:
                 res = await client.get(f'http://{domain}:80/.well-known/acme-challenge/{token}')
-                if res.status_code == 200 and res.text.rstrip() == f'{token}.{jwk.thumbprint()}':
+                actual_text_content = res.text.rstrip()
+                expected_text_content = f'{token}.{jwk.thumbprint()}'
+
+                if res.status_code == 200 and actual_text_content == expected_text_content:
                     err = False
                 else:
                     err = ACMEException(
@@ -32,11 +35,26 @@ async def check_challenge_is_fulfilled(*, domain: str, token: str, jwk: jwcrypto
                         new_nonce=new_nonce,
                     )
         except httpx.ConnectTimeout:
-            err = ACMEException(status_code=status.HTTP_400_BAD_REQUEST, exctype='connection', detail='timeout', new_nonce=new_nonce)
+            err = ACMEException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                exctype='connection',
+                detail='timeout',
+                new_nonce=new_nonce,
+            )
         except httpx.ConnectError:
-            err = ACMEException(status_code=status.HTTP_400_BAD_REQUEST, exctype='dns', detail='could not resolve address', new_nonce=new_nonce)
+            err = ACMEException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                exctype='dns',
+                detail='could not resolve address',
+                new_nonce=new_nonce,
+            )
         except Exception:
-            err = ACMEException(status_code=status.HTTP_400_BAD_REQUEST, exctype='serverInternal', detail='could not validate challenge', new_nonce=new_nonce)
+            err = ACMEException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                exctype='serverInternal',
+                detail='could not validate challenge',
+                new_nonce=new_nonce,
+            )
         if err is False:
             return  # check successful
         await asyncio.sleep(3)
