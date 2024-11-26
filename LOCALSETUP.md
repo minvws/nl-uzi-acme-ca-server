@@ -1,4 +1,6 @@
 # Local setup
+> This application is currently only testable with the [yubisign project](https://github.com/minvws/nl-uzipoc-yubisign). Previously, this was tested with the `certbot` tool, however, this only works for domain-based challenges.
+
 This document will explain the process to run the ACME CA server locally. First, To run the ACME CA server locally. Initial system requirements are to have the following tools available in your terminal.
 - **`python3.13`**: Make sure the executable is also accessible from your local terminal. 
 - **`docker`**: Together with Docker Desktop to easily debog container information.
