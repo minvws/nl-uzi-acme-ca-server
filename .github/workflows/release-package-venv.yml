@@ -17,4 +17,5 @@ jobs:
         uses: minvws/nl-irealisatie-generic-pipelines/.github/actions/python-venv-package@main
         with:
           python_version: ${{ matrix.python_version }}
+          working_directory: app
           package_file_name: nl-uzi-acme-ca-server
