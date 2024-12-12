@@ -3,7 +3,7 @@
 
 This document will explain the process to run the ACME CA server locally. First, To run the ACME CA server locally. Initial system requirements are to have the following tools available in your terminal.
 - **`python3.13`**: Make sure the executable is also accessible from your local terminal. 
-- **`docker`**: Together with Docker Desktop to easily debog container information.
+- **`docker`**: Together with Docker Desktop to easily debug container information.
 - **`git`**: To update the application when needed.
 
 ## Getting started
