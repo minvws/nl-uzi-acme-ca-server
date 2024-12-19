@@ -1,5 +1,5 @@
 # ACME CA Server
-This project was initially forked from [this repository](https://github.com/knrdl/acme-ca-server). Here we made some changes to implement [our custom ACME challenge](https://github.com/minvws/nl-rdo-uzi-coordination-private/blob/main/documentation/acme-challenge.md) ([PR](https://github.com/minvws/nl-uzi-acme-ca-server/pull/2)), improve the code quality and add some documentation. This ACME server should not be used in a production environment.
+This project was initially forked from [this repository](https://github.com/knrdl/acme-ca-server). Here we made some changes to setup a PoC for [our custom ACME challenge](https://github.com/minvws/nl-rdo-uzi-coordination-private/blob/main/documentation/acme-challenge.md) ([PR](https://github.com/minvws/nl-uzi-acme-ca-server/pull/2)), improve the code quality and add some documentation. This ACME server should not be used in a production environment.
 
 Since the project was developed in a PoC phase, we only  tested the changes manually. This means Certbot can not be used to test the custom challenge.
 
